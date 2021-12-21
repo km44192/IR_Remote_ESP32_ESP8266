@@ -1,0 +1,101 @@
+#model{
+    position:absolute;
+    top:50px;
+    left:250px;
+}
+#pilot {
+    
+    
+    width: 240px;
+    height: 350px;
+    padding: 10px;
+    margin: 10px, 0,0,0;
+    border: solid black 1px;
+    border-radius: 10px;
+    padding-left: 10px;
+}
+
+button {
+
+    margin-right: 10px;
+    margin-bottom: 10px;
+    padding: 0, 0;
+    width: 50px;
+    border-radius: 50%;
+    height: 50px;
+    text-align: center;
+}
+
+#off {
+    background-color: black;
+    color: white;
+}
+
+#on {
+    background-color: red;
+    color: white;
+}
+
+#r {
+    background-color: red;
+}
+
+#g {
+    background-color: green;
+}
+
+#b {
+    background-color: blue;
+}
+
+#w {
+    background-color: grey;
+}
+
+#o1 {
+    background-color: rgb(245, 131, 94);
+}
+
+#o2 {
+    background-color: rgb(244, 115, 119);
+}
+
+#o3 {
+    background-color: rgb(241, 160, 89);
+}
+
+#o4 {
+    background-color: rgb(216, 233, 73);
+}
+
+#g1 {
+    background-color: rgb(71, 219, 71);
+}
+
+#g2 {
+    background-color: rgb(71, 192, 239);
+}
+
+#g3 {
+    background-color: rgb(64, 114, 164);
+}
+
+#g4 {
+    background-color: rgb(64, 95, 140);
+}
+
+#b1 {
+    background-color: rgb(74, 98, 225);
+}
+
+#b2 {
+    background-color: rgb(101, 31, 118);
+}
+
+#b3 {
+    background-color: rgb(150, 45, 130);
+}
+
+#b4 {
+    background-color: rgb(210, 130, 210);
+}

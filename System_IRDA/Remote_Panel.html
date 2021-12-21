@@ -1,0 +1,28 @@
+
+    <title>ESP8266 Remote Controller</title>
+    <style>#model{position:absolute;
+    top:50px;
+    left:250px;}</style>
+
+<body><nav width="100%" height="20px">
+    <a href="/register">Zarejestruj użytkownika</a>
+    <a href="/recive">Dodaj nowy kod IR</a>
+    <a href="/custom">Pilot do własnych kodow</a>
+</nav>
+    <h1>Remote Controll</h1>
+    <div id="pilot">
+        <form method="POST" id="pilot2" action="/x"> 
+            <select id="model" onclick="var war=document.getElementById('model').value;   pilotek(war)">
+                <option></option>
+                <option value="LED">LED
+                </option>
+                <option value="PHILIPS">PHILIPS</option>
+                <option value="ORANGE">ORANGE</option>
+                <option value="SONY">SONY</option>
+                <option value="AC">klimatyzacja</option>
+                <option value="SHARP">SHARP</option>
+                <option value="LG">LG</option>
+                    </select>
+        </form>
+    </div>
+
