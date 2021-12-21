@@ -1,0 +1,2 @@
+# Dyplom
+Projekt pracy dyplomowej
