@@ -41,7 +41,8 @@ const uint8_t kTimeout = 50;
 const uint8_t kTimeout = 15;
 #endif
 
-
+bool is_changed=false;
+String proto="",adres="",komenda="",kodes="",bity="",very_long_int="";
 IRrecv irrecv(kRecvPin, kCaptureBufferSize, kTimeout, true);
 const uint8_t kTolerancePercentage = 25;  // kTolerance is normally 25%
 #define LEGACY_TIMING_INFO false
@@ -50,10 +51,11 @@ const uint16_t kMinUnknownSize = 32;
 
 
 void setup() {
-  String tt[2]={"NEC;0x617048B7;32;ToggleOnOff","NEC;0x617014EB;32;Ulubione"};
+  pinMode(LED_BUILTIN,OUTPUT);
+  //String tt[2]={"NEC;0x617048B7;32;ToggleOnOff","NEC;0x617014EB;32;Ulubione"};
   kody.push_back("dummy_code");
-  kody.push_back(tt[1].c_str());
-  kody.push_back(tt[0].c_str());
+ // kody.push_back(tt[1].c_str());
+  //kody.push_back(tt[0].c_str());
   users[0] = "admin";
   passwd[0] = "admin";
   Serial.begin(115200);
@@ -97,6 +99,18 @@ void setup() {
 void loop() {
   secureServer.loop();
   delay(10);
+   if (irrecv.decode(&results)&&!is_changed) 
+   {
+    digitalWrite(LED_BUILTIN,HIGH);
+    delay(500);
+    proto=marka[results.decode_type + 1];
+    adres=String(results.address, HEX);
+    komenda=String(results.command, HEX);
+    very_long_int=Uint64toPrint(results.value);
+    bity=String(results.bits);
+    digitalWrite(LED_BUILTIN,0);
+    is_changed=true;
+    }
 }
 
 void handleRoot(HTTPRequest * req, HTTPResponse * res) {
@@ -125,7 +139,7 @@ void handleRemote(HTTPRequest * req, HTTPResponse * res)
     res->println("<h1>Pilot do kodow IR w postaci Listy</h1>");
     Serial.printf("Aktualny rozmiar wektora %i \n", kody.size());
     Serial.printf("Element zerowy wektora %s \n" , kody[0].c_str());
-    for (int i = 0; i < kody.size(); i++) {
+    for (int i = 1; i < kody.size(); i++) {
       String w = "<p><input type=\"text\" size=\"50px\" onclick=\"send(this)\" readonly value=\"" + (String)kody[i].c_str();
       w.concat("\"/></p>");
       res->println(w);
@@ -135,21 +149,7 @@ void handleRemote(HTTPRequest * req, HTTPResponse * res)
   else handle404(req, res);
 }
 void handleRecive(HTTPRequest * req, HTTPResponse * res) {
-
-  yield();
-  delay(100);
-  //irrecv.enableIRIn();
-  if (irrecv.decode(&results)) {
     Serial.print("dekodowanie \n");
-    String values = Uint64toPrint(results.value);
-    //String raw_data = "";
-   // for (uint16_t i = 1; i < results.rawlen; i++) {
-    //  if (i % 100 == 0) yield();
-   //   if (i & 1)
-   //     raw_data += String(results.rawbuf[i] * kRawTick, DEC);
-    //  else
-    //    raw_data += "," + String(results.rawbuf[i] * kRawTick, DEC);
-    //}// Serial.println(raw_data);
     res->setHeader("Content-Type", "text/html");
     res->println("<!DOCTYPE html>");
     res->println("<html>");
@@ -159,25 +159,20 @@ void handleRecive(HTTPRequest * req, HTTPResponse * res) {
     res->println("function sender(){");
     res->println("xhttp=new XMLHttpRequest(); xhttp.open(\"GET\",\"/Add?x=\"+document.getElementById('model').value+\";\"+document.getElementById('value').value+\";\"+document.getElementById('len').value+\";\"+document.getElementById('koment').value+\";\"); ");
     res->println("xhttp.send();}  </script></head><body>");
-    res->println("<p>Model/Protokol<input type=\"text\" id=\"model\" name=\"model\" readonly value=\"" + (String(marka[results.decode_type + 1]) + "\"></p>"));
-    res->println("<p>Adres<input type=\"text\" id=\"address\" name=\"address\" readonly value=\"" + (String(results.address, HEX) + "\"></p>"));
-    res->println("<p>Komenda<input type=\"text\" id=\"command\" name=\"command\" readonly value=\"" + (String(results.command, HEX) + "\"></p>"));
+    res->println("<p>Model/Protokol<input type=\"text\" id=\"model\" name=\"model\" readonly value=\"" + (proto + "\"></p>"));
+    res->println("<p>Adres<input type=\"text\" id=\"address\" name=\"address\" readonly value=\"" + (adres + "\"></p>"));
+    res->println("<p>Komenda<input type=\"text\" id=\"command\" name=\"command\" readonly value=\"" + (komenda + "\"></p>"));
     res->print("<p>Wartośc komendy<input type=\"text\" id=\"value\" name=\"command\" readonly value=\"");
-    res->print(values);
+    res->print(very_long_int);
     res->println("\"></p>");
-    res->println("<p>Ile bitow<input type=\"text\" id=\"len\" name=\"bits\" readonly value=\"" + (String(results.bits) + "\"></p><br>"));
-    // res->print("<p>Kod IR w postaci RAW <input type=\"text\" id=\"raw\" name=\"bits\" readonly value=\"");
-    //res->print(raw_data);
-    //res->println("\"></p>");
+    res->println("<p>Ile bitow<input type=\"text\" id=\"len\" name=\"bits\" readonly value=\"" + (bity + "\"></p><br>"));
     res->println("<p>Nazwa komendy do zapisania<input type=\"text\" id=\"koment\" name=\"nazwa\">");
     res->println("<button onclick=\"sender()\">Save Code</button><br>");
-    res->println("<h3>Na potrzeby pracy zapisywane są tylko 3 pola model wartosc komendy i RAW oraz nazwa własna komendy ");
+    res->println("<h3>Na potrzeby pracy zapisywane są tylko 3 pola model wartosc komendy i RAW oraz nazwa własna komendy</h3> ");
+    res->println("Odswiezenie strony powoduje zdejcie blokady na odbieranie kodow IR. Dziala to jednorazowo(jeden kod IR na odswiezenie)</br>Otrzymanie kodu zostaje zasygnalizowane zaswieceniem sie wbudowanej diody LED<br>");
     res->println("</body></html>");
-    //    raw_data="";
-    // res->finalize();
-   // irrecv.disableIRIn();
-   irrecv.resume();
-  }
+  is_changed=false;
+  
 }
 void handleSend(HTTPRequest * req, HTTPResponse * res) {
   if(is_auth(req->getClientIP())){
@@ -213,9 +208,11 @@ void handleSend(HTTPRequest * req, HTTPResponse * res) {
     Serial.printf("Protokol= %s \n",prot.c_str());
     Serial.printf("Wartosc= %s \n",war.c_str());
     Serial.printf("rozmiar= %s \n",len.c_str());
-    SendIR(prot,strtoull(war.c_str(),NULL,10),(uint16_t)strtol(len.c_str(),NULL,10));
+   
     res->setHeader("Content/Type","text/plain");
-    res->printf("wyslano wiadomosc model: %s kod: %s dlugosc: %s \n",prot.c_str(),war.c_str(),len.c_str()); }
+    res->printf("wyslano wiadomosc model: %s kod: %s dlugosc: %s \n",prot.c_str(),war.c_str(),len.c_str()); 
+     SendIR(prot,strtoull(war.c_str(),NULL,16),(uint16_t)strtol(len.c_str(),NULL,10));
+    }
     else
     handle404(req,res);
 }
@@ -281,16 +278,20 @@ bool is_auth(IPAddress ip) {
 
 void SendIR(std::string model,uint64_t irdata,uint16_t len) {
  // int tmp;
+ delay(300);
+ yield();
   for(int i=0;i<100;i++){
-    Serial.printf("Oczekiwany model: :%s: otrzymany: :%s: \n",model,marka[i].c_str());
+    Serial.printf("Oczekiwany model: :%s: otrzymany: :%s: \n",model.c_str(),marka[i].c_str());
     delay(50);
   if(model==(std::string)marka[i].c_str()){
-
-    Serial.print((decode_type_t)(i-1));
-  sender.send((decode_type_t)(i-1),irdata,len,2);
+    //if((decode_type_t)(i-1)==NEC)
+    Serial.println(Uint64toPrint(irdata));
+    Serial.print((decode_type_t)i-1);
+    
+  sender.send((decode_type_t)(i-1),irdata,len);
   break;
   }
-  }Serial.print("Nie udalo sie wyslac kodu");
+  }//Serial.print("Nie udalo sie wyslac kodu");
   
   
   
