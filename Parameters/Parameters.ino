@@ -2,49 +2,57 @@
 //#define WIFI_SSID "Orange_Swiatlowod_9E6A"
 //#define WIFI_PSK  "C4E5TY7ASKJL"
 // Include certificate data (see note above)
-#include <cert.h>
-#include <private_key.h>
+#include "cert.h"
+#include "private_key.h"
 #include <WiFi.h>
 #include <IRrecv.h>
 #include <IRsend.h>
-#include <IRac.h>
+//#include <IRac.h>
 #include <HTTPSServer.hpp>
 #include <SSLCert.hpp>
 #include <HTTPRequest.hpp>
 #include <HTTPResponse.hpp>
-#include <sites.h>
+#include "sites.h"
 #include <Preferences.h>
 // The HTTPS Server comes in a separate namespace. For easier use, include it here.
 
 using namespace httpsserver;
-bool is_auth(IPAddress ip) {
+bool is_auth(std::string token) {
   for (byte w = 0; w < 4; w++)
-    if (klient[w].addr == ip)
+    if (klient[w].token == token&&klient[w].expire>millis())
     { return true;
       break;
     }
+    else if(klient[w].token==token&&klient[w].expire-millis()>millis())
+    {//if time expires delete token
+      //but how to prevent miscalculation when counter overflows
+      klient[w].token="";klient[w].expire=0;
+      return false;
+      break;
+      }
   return false;
 }
 
 
 
-  void auth(IPAddress ip) {
+ std::string auth() {
   for (byte w = 0; w < 4; w++)
-
-
-    if (klient[w].addr == ip && !klient[w].auth) {
-      klient[w].auth = true;
-      break;
+  {
+  if(klient[w].token=="")
+   {
+   byte s=random(2,10);//losowanie dlugosci klucza
+   for(byte tt=0;tt<s;tt++)
+    {
+    if(tt<(s-1))
+     klient[w].token+=String(esp_random()).c_str();//kodowanie random
+    else if(tt==(s-1))
+     klient[w].token+=String(millis()).c_str();//ostatnie bajty tokenu
     }
-
-    else if (klient[w].addr[0] == 0) {
-      klient[w].addr = ip;
-      klient[w].auth = true;
-      break;
-    }
-    else {
-      break;
-    }
+klient[w].expire=millis()+864000000;//token valid about 10 days
+   return klient[w].token;
+   break;
+   }
+  }
 }
 
  String TSSID="Orange_Swiatlowod_9E6A";
@@ -67,7 +75,7 @@ void handleConfig(HTTPRequest * req,HTTPResponse * res);
 void ESPConfig(HTTPRequest * req,HTTPResponse * res);
 IRsend sender(4);
 decode_results results;
-
+uint32_t myTime=0;
 const uint16_t kRecvPin = 34;
 const uint16_t kCaptureBufferSize = 128;
 #if DECODE_AC
@@ -177,23 +185,26 @@ void loop() {
   delay(10);
    if (irrecv.decode(&results)&&!is_changed) 
    {
-    digitalWrite(LED_BUILTIN,HIGH);
-    delay(500);
+   
+    digitalWrite(LED_BUILTIN,1);
+    if(millis()-myTime>500){
+       myTime=millis();
     proto=marka[results.decode_type + 1];
     adres=String(results.address, HEX);
     komenda=String(results.command, HEX);
     very_long_int=Uint64toPrint(results.value);
     bity=String(results.bits);
     digitalWrite(LED_BUILTIN,0);
-    is_changed=true;
+    is_changed=true;}
     }
 }
 /*po wpisaniu adresu IP bądź przypisanego adresu url domyślnie obsłuż to*/
 void handleRoot(HTTPRequest * req, HTTPResponse * res) {
 
 
-  if (!is_auth(req->getClientIP())) {
+  if (!is_auth(req->getHeader("Cookie"))) {
     res->setHeader("Content-Type", "text/html");
+    //res->setHeader("Cookie",
     res->print(Login);
   }
   else
@@ -202,7 +213,7 @@ void handleRoot(HTTPRequest * req, HTTPResponse * res) {
 }/*Jeżeli klient podał poprawne dane, to wyświetl dane zdalnego pilota*/
 void handleRemote(HTTPRequest * req, HTTPResponse * res)
 {
-  if (is_auth(req->getClientIP())) {
+  if (is_auth(req->getHeader("Cookie"))) {
     Serial.println("uzyskano autoryzacje");
     res->setHeader("Content-Type", "text/html");
     res->println("<html><head>");
@@ -250,7 +261,7 @@ void handleRecive(HTTPRequest * req, HTTPResponse * res) {
   
 }/**/
 void handleSend(HTTPRequest * req, HTTPResponse * res) {
-  if(is_auth(req->getClientIP())){
+  if(is_auth(req->getHeader("Cookie"))){
   ResourceParameters * params = req->getParams();
   std::string ss = "", prot = "", war = "", len = "";
   params->getQueryParameter("x", ss);
@@ -308,7 +319,7 @@ void handleLogin(HTTPRequest * req, HTTPResponse * res) {
   Serial.printf("user %s\n", xx.c_str());
   Serial.printf("passwd %s\n" , yy.c_str());
   if (czek(xx.c_str(), yy.c_str()))
-    {auth(req->getClientIP());
+    {res->setHeader("Cookie",auth().c_str());
   handleRemote(req, res);}
 }
 /*Jeżeli nie ma takiego zasobu wyświetl to*/
@@ -350,4 +361,3 @@ res->print("Zaraz nastąpi reset urządzenia");
 vTaskDelay(3000);
 ESP.restart();
 }
-

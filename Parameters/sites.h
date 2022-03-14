@@ -177,8 +177,7 @@ while(s>0)
 return "0x"+tmp;
 }
 static struct{
-  IPAddress addr={0,0,0,0};
-  bool auth=false;
-  uint16_t port=0;
+  std::string token="";
+  uint32_t expire=0;
   }klient[4];
  
