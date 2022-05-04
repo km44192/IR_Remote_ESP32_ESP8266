@@ -22,8 +22,8 @@ const uint16_t kRecvPin = 4;
 const uint32_t kBaudRate = 115200;
 const uint16_t kCaptureBufferSize = 1024;
 
-const char *ssid = "Orange_Swiatlowod_9E6A";
-const char *password ="C4E5TY7ASKJL";
+const char *ssid = "xxxxxxxxx";
+const char *password ="yyyyyyy";
 
 
 #if DECODE_AC
