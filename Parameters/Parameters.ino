@@ -1,6 +1,6 @@
 
-#define WIFI_SSID "Orange_Swiatlowod_9E6A"
-#define WIFI_PSK  "C4E5TY7ASKJL"
+#define WIFI_SSID "xxxxxxxxxx"
+#define WIFI_PSK  "yyyyyyyyyy"
 // Include certificate data (see note above)
 #include "cert.h"
 #include "private_key.h"
