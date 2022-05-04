@@ -1,6 +1,4 @@
 
-//#define WIFI_SSID "Orange_Swiatlowod_9E6A"
-//#define WIFI_PSK  "C4E5TY7ASKJL"
 // Include certificate data (see note above)
 #include "cert.h"
 #include "private_key.h"
@@ -55,8 +53,8 @@ klient[w].expire=millis()+864000000;//token valid about 10 days
   }
 }
 
- String TSSID="Orange_Swiatlowod_9E6A";
- String TPASSWD="C4E5TY7ASKJL";
+ String TSSID="xxxxxxxxx";
+ String TPASSWD="yyyyyyyy";
 SSLCert cert = SSLCert(
                  server_crt_DER, server_crt_DER_len,
                  server_key_DER, server_key_DER_len
